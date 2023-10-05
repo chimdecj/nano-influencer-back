@@ -6,7 +6,6 @@ import json
 from json import JSONEncoder
 
 from app.db.models import *
-from app.api import api
 from app.db import models, schema, crud
 
 from .db.database import SessionLocal, engine
@@ -15,7 +14,29 @@ from .db.database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "Users",
+        "description": "Operations with users. The **login** logic is also here.",
+    },
+    {
+        "name": "Influencers",
+        "description": "Operations with influencers.",
+    },
+    {
+        "name": "Organizations",
+        "description": "Operations with organizations.",
+    },
+    {
+        "name": "Campaigns",
+        "description": "Operations with campaigns.",
+    },
+]
+
+app = FastAPI(
+    title="Influencer Marketing Platform API",
+    openapi_tags=tags_metadata
+)
 
 
 def get_database_session():
@@ -25,83 +46,91 @@ def get_database_session():
     finally:
         db.close()
 
-@app.get("/")
-def root():
-    return {"message": "Fast API in Python"}
+# @app.get("/")
+# def root():
+#     return {"message": "Fast API in Python"}
 
-@app.get("/db_check")
-async def db_check(request: Request, id: int, db: Session = Depends(get_database_session)):
-    print(db)
-    return JSONResponse(status_code=200, content={
-        "status_code": 200,
-        "message": "success",
-        # "movie": newMovie
-    })
-
-@app.get("/user")
-def read_user():
-    return api.read_user()
+# @app.get("/db_check")
+# async def db_check(request: Request, id: int, db: Session = Depends(get_database_session)):
+#     print(db)
+#     return JSONResponse(status_code=200, content={
+#         "status_code": 200,
+#         "message": "success",
+#         # "movie": newMovie
+#     })
 
 
-@app.get("/user/{id}")
-def read_user_by_id(request: Request, id: int, db: Session = Depends(get_database_session)):
-    record = db.query(User).filter(User.id==id).first()
-    return JSONResponse(status_code=200, content={
-        "status_code": 200,
-        "message": "success",
-        "user": jsonable_encoder(record)
-    })
+# @app.get("/user/{id}")
+# def read_user_by_id(request: Request, id: int, db: Session = Depends(get_database_session)):
+#     record = db.query(User).filter(User.id==id).first()
+#     return JSONResponse(status_code=200, content={
+#         "status_code": 200,
+#         "message": "success",
+#         "user": jsonable_encoder(record)
+#     })
     
+@app.get("/user/", response_model=schema.UserReturn, tags=["Users"])
+def get_user_by_name(request: Request, id: int, db: Session = Depends(get_database_session)):
+    db_user = crud.get_user_by_id(db=db, id=id)
+    return db_user
     
-@app.post("/organization/", response_model=schema.Organization)
-def create_org(request: Request, org: schema.OrganizationCreate, db: Session = Depends(get_database_session)):
-    db_org = crud.get_org_by_name(db, name=org.organization_name)
+@app.post("/user/", response_model=schema.User, tags=["Users"])
+def create_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session)):
+    db_user = crud.get_user_by_name(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    return crud.create_user(db=db, item=user)
+
+@app.post("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
+def create_influencer(request: Request, user_id: int, influencer_item: schema.InfluencerCreate, db: Session = Depends(get_database_session)):
+    inf = crud.create_influencer(db=db, item=influencer_item)
+    db_user = crud.update_user(db=db, user_id=user_id, inf_id=inf.id)
+    return inf
+
+@app.get("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
+def get_influencer_by_id(inf_id:int, db: Session = Depends(get_database_session)):
+    return crud.get_influencer(db=db, inf_id=inf_id)
+
+@app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
+def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session)):
+    accounts = crud.get_user_social_accounts(db, inf_id==inf_id)
+    return accounts
+
+@app.post("/social_accounts/", response_model=schema.SocialAccount, tags=["Influencers"])
+def create_social_account(request: Request, inf_id:int, social_account: schema.SocialAccountCreate, db: Session = Depends(get_database_session)):
+    db_sa = crud.get_user_social_accounts_by_type(db, inf_id=inf_id, type=social_account.account_type)
+    if db_sa:
+        raise HTTPException(status_code=400, detail="This type of social account already registered on user")
+    return crud.create_social_account(db=db, item=social_account, inf_id=inf_id)
+
+    
+@app.post("/organization/", response_model=schema.Organization, tags=["Organizations"])
+def create_org(request: Request, user_id: int, org: schema.OrganizationCreate, db: Session = Depends(get_database_session)):
+    db_org = crud.get_org_by_name(db, name=org.name)
     if db_org:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_orgs(db=db, item=org)
+        raise HTTPException(status_code=400, detail="Org already registered")
+    db_org = crud.create_orgs(db=db, item=org)
+    crud.update_user(db=db, user_id=user_id, org_id=db_org.id)
+    return db_org
 
-@app.get("/organizations/", response_model=List[schema.Organization])
+@app.get("/organizations/", response_model=List[schema.Organization], tags=["Organizations"])
 def read_orgs(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
     orgs = crud.get_orgs(db, skip=skip, limit=limit)
     return orgs
 
 
-@app.post("/campaign/", response_model=schema.Campaign)
+@app.post("/campaign/create", response_model=schema.Campaign, tags=["Campaigns"])
 def create_campaign(request: Request, org_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
-    db_campaign = crud.get_campaign_by_name(db, name=campaign.campaign_name, org_id=org_id)
+    db_campaign = crud.get_campaign_by_name(db, name=campaign.title, org_id=org_id)
     if db_campaign:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Campaign with this name already registered")
     return crud.create_campaign(db=db, item=campaign, org_id=org_id)
 
-@app.get("/campaigns/", response_model=List[schema.Campaign])
+@app.post("/campaign/update", response_model=schema.Campaign, tags=["Campaigns"])
+def update_campaign(request: Request, campaign_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
+    return crud.update_campaign(db=db, item=campaign, campaign_id=campaign_id)
+
+@app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
 def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
     campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
     return campaigns
-
-
-
-# @app.get("/question/{position}", status_code=200)
-# def read_questions(position: int, response: Response):
-#     question = api.read_questions(position)
-
-#     if not question:
-#         raise HTTPException(status_code=400, detail="Error")
-
-#     return question
-
-
-# @app.get("/alternatives/{question_id}")
-# def read_alternatives(question_id: int):
-#     return api.read_alternatives(question_id)
-
-
-# @app.post("/answer", status_code=201)
-# def create_answer(payload: UserAnswer):
-#     payload = payload.dict()
-
-#     return api.create_answer(payload)
-
-
-# @app.get("/result/{user_id}")
-# def read_result(user_id: int):
-#     return api.read_result(user_id)

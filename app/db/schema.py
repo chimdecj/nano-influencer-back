@@ -1,45 +1,66 @@
-from typing import List
-from datetime import datetime
+from typing import List, Optional
+from datetime import datetime, date
 from pydantic import BaseModel
-import pydantic
+from pydantic import Field
 
 
-class User(BaseModel):
-    id: int
-    name: str
-    age: int
-    # email: str
+class SocialAccountBase(BaseModel):
+    account_type:int = Field(description="0 bol Instagram")
+    total_followers:int
+    account_profile:str
+    account_image:str
+    last_updated:datetime
     
     class Config:
         orm_mode = True
 
-class Answer(BaseModel):
-    question_id: int
-    alternative_id: int
+class SocialAccountCreate(SocialAccountBase):
+    pass
+
+class SocialAccount(SocialAccountBase):
+    inf_id:int
+
+
+class InfluencerBase(BaseModel):
+    phonenumber:str
+    email:str
+    first_name:str
+    last_name:str
+    dateofbirth:date
+    gender: int = Field(description="0 bol eregtei, 1 bol emegtei")
+    category: str
+    profession: str
+    work_position: str
+    work_name: str
+    work_address: str
+    family_count: str
+    home_address: str
+    bank: str
+    bankaccount: str
     
     class Config:
         orm_mode = True
 
+class InfluencerCreate(InfluencerBase):
+    pass
 
-class UserAnswer(BaseModel):
-    user_id: int
-    answers: List[Answer]
+class Influencer(InfluencerBase):
+    socialAccounts:List[SocialAccount] = []
     
-    class Config:
-        orm_mode = True
         
 class CampaignBase(BaseModel):
-    campaign_name:str
-    campaign_status:str
-    campaign_owner:str
-    campaign_type:str
-    campaign_logo_id:str
-    campaign_start_date_time:datetime
-    campaign_end_date_time:datetime
-    campaign_summary:str
-    campaign_guidance:str
-    campaign_photo:str
-    campaign_word:str
+    status:int  = Field(description="#0-draft, 1-Submitted, 2-Active, 3-Finished")
+    type:Optional[int] = Field(description="Product type #1-Ez Awareness")
+    platform_type:Optional[int] = Field(description = "0- Instagram")
+    title:str
+    start_date_time:Optional[datetime]
+    end_date_time:Optional[datetime]
+    created_date:Optional[datetime]
+    updated_date:Optional[datetime]
+    purpose:Optional[str]
+    wording:Optional[str]
+    guidance:Optional[str]
+    owner_id:Optional[int]
         
 class CampaignCreate(CampaignBase):
     pass
@@ -47,12 +68,13 @@ class CampaignCreate(CampaignBase):
 class Campaign(CampaignBase):
     id:int
     org_id:int
+    owner_id:int
     
     class Config:
         orm_mode = True
         
 class OrganizationBase(BaseModel):
-    organization_name:str
+    name:str
     industry:str
     sub_industry:str
     instagram_profile:str
@@ -75,5 +97,33 @@ class Organization(OrganizationBase):
         orm_mode = True
 
 
+class UserBase(BaseModel):
+    username: str
+    password: str
+    user_type: int
+   
+    class Config:
+        orm_mode = True
 
+class UserCreate(UserBase):
+    pass
+
+class User(UserBase):
+    id:int
+    org_id: Optional[int]
+    inf_id: Optional[int]
     
+class UserUpdate(UserBase):
+    org_id:Optional[int] = None
+    inf_id:Optional[int] = None
+    
+class UserReturn(BaseModel):
+    id:int
+    username: str
+    user_type: int
+    org_id:Optional[int] = None
+    inf_id:Optional[int] = None
+    
+    class Config:
+        orm_mode = True
+
