@@ -1,14 +1,20 @@
-from fastapi import FastAPI, HTTPException, Request, Form, Depends
+from fastapi import FastAPI, HTTPException, Request, Form, Depends, UploadFile, File
 from starlette.responses import Response, RedirectResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from starlette.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import json
+import shutil
+import os
 from json import JSONEncoder
 
 from app.db.models import *
 from app.db import models, schema, crud
 
 from .db.database import SessionLocal, engine
+
+import string, random, pathlib
+
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -33,10 +39,13 @@ tags_metadata = [
     },
 ]
 
+
 app = FastAPI(
     title="Influencer Marketing Platform API",
     openapi_tags=tags_metadata
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def get_database_session():
@@ -134,3 +143,47 @@ def update_campaign(request: Request, campaign_id:int, campaign: schema.Campaign
 def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
     campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
     return campaigns
+
+
+@app.post("/upload/")
+async def create_upload_file(request: Request, file: UploadFile = File(None)):
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+
+    # move the cursor back to the beginning
+    await file.seek(0)
+
+    if file_size > 2 * 1024 * 1024:
+        # more than 2 MB
+        raise HTTPException(status_code=400, detail="File too large")
+
+    # check the content type (MIME type)
+    content_type = file.content_type
+    if content_type not in ["image/jpeg", "image/png", "image/gif"]:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    # do something with the valid file
+    upload_dir = os.path.join(os.getcwd(), "./static")
+    # Create the upload directory if it doesn't exist
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+
+    # get the destination path
+    file_extension = pathlib.Path(file.filename).suffix
+
+    filename = get_randomname_string() + file_extension
+    dest = os.path.join(upload_dir, filename)
+    print(dest)
+
+    # copy the file contents
+    with open(dest, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    url = str(request.url).replace("upload", "static")
+    return {"file_url": url + filename}
+
+
+def get_randomname_string():
+    # choose from all lowercase letter
+    letters = string.ascii_lowercase + string.digits
+    result_str = ''.join(random.choice(letters) for i in range(30))
+    return result_str
