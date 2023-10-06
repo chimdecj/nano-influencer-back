@@ -77,6 +77,8 @@ def update_user(db: Session, user_id:int, inf_id:int = None, org_id:int = None):
 def get_influencer(db: Session, inf_id: int):
     return db.query(models.Influencer).filter(models.Influencer.id == inf_id).first()
 
+def get_influencer_list(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Influencer).offset(skip).limit(limit).all()
 
 def create_influencer(db: Session, item: schema.InfluencerCreate):
     db_influencer = models.Influencer(**item.dict())

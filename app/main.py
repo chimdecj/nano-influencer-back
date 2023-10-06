@@ -100,6 +100,10 @@ def create_influencer(request: Request, user_id: int, influencer_item: schema.In
 def get_influencer_by_id(inf_id:int, db: Session = Depends(get_database_session)):
     return crud.get_influencer(db=db, inf_id=inf_id)
 
+@app.get("/influencer/list", response_model=List[schema.Influencer], tags=["Influencers"])
+def get_influencer_list(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
+    return crud.get_influencer_list(db=db)
+
 @app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session)):
     accounts = crud.get_user_social_accounts(db, inf_id==inf_id)
