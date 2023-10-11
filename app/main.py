@@ -14,7 +14,7 @@ from app.db import models, schema, crud, db_util
 from .db.database import SessionLocal, engine
 
 import string, random, pathlib
-
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # models.Base.metadata.create_all(bind=engine)
@@ -47,6 +47,15 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_database_session():
     try:
