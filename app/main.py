@@ -9,7 +9,7 @@ import os
 from json import JSONEncoder
 
 from app.db.models import *
-from app.db import models, schema, crud
+from app.db import models, schema, crud, db_util
 
 from .db.database import SessionLocal, engine
 
@@ -17,7 +17,7 @@ import string, random, pathlib
 
 
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 
 tags_metadata = [
@@ -62,11 +62,11 @@ def get_database_session():
 # @app.get("/db_check")
 # async def db_check(request: Request, id: int, db: Session = Depends(get_database_session)):
 #     print(db)
-#     return JSONResponse(status_code=200, content={
-#         "status_code": 200,
-#         "message": "success",
-#         # "movie": newMovie
-#     })
+    # return JSONResponse(status_code=200, content={
+    #     "status_code": 200,
+    #     "message": "success",
+    #     # "movie": newMovie
+    # })
 
 
 # @app.get("/user/{id}")
@@ -131,6 +131,10 @@ def read_orgs(skip: int = 0, limit: int = 100, db: Session = Depends(get_databas
     orgs = crud.get_orgs(db, skip=skip, limit=limit)
     return orgs
 
+@app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
+def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
+    campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
+    return campaigns
 
 @app.post("/campaign/create", response_model=schema.Campaign, tags=["Campaigns"])
 def create_campaign(request: Request, org_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
@@ -143,10 +147,31 @@ def create_campaign(request: Request, org_id:int, campaign: schema.CampaignCreat
 def update_campaign(request: Request, campaign_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
     return crud.update_campaign(db=db, item=campaign, campaign_id=campaign_id)
 
-@app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
-def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
-    campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
-    return campaigns
+@app.post("/campaign/add_influencer", tags=["Campaigns"])
+def add_influencer_to_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
+   
+    if db_util.check_influencer_in_campaign(db=db, associated_influencer=associated_influencer):
+        return JSONResponse(status_code=300, content={
+            "status_code": 300,
+            "message": "Influencer already in campaign",
+        })
+    updated_campaign = crud.add_influencer_to_campaign(db=db, associated_influencer=associated_influencer)
+    if update_campaign == None:
+        raise HTTPException(status_code=400, detail="Campaign not found.")
+    return JSONResponse(status_code=200, content={
+        "status_code": 200,
+        "message": "Success",
+    })
+    
+@app.post("/campaign/remove_influencer", tags=["Campaigns"])
+def remove_influencer_from_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
+    updated_campaign = crud.remove_influencer_from_campaign(db=db, associated_influencer=associated_influencer)
+    if update_campaign == None:
+        raise HTTPException(status_code=400, detail="Campaign not found.")
+    return JSONResponse(status_code=200, content={
+        "status_code": 200,
+        "message": "Success",
+    })
 
 
 @app.post("/upload/")

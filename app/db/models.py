@@ -68,6 +68,13 @@ class Organization(Base):
     
     campaigns = relationship("Campaign", back_populates="org")
     
+
+class CampaignInfluencers(Base):
+    __tablename__ = "Association_Influencers"
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("Campaign.id"))
+    influencer_id = Column(Integer, ForeignKey("Influencer.id"))
+
     
 class Campaign(Base):
     __tablename__ = "Campaign"
@@ -87,3 +94,4 @@ class Campaign(Base):
     owner_id = Column(Integer, ForeignKey("User.id"))
     org_id = Column(Integer, ForeignKey("Organization.id"))
     org = relationship("Organization", back_populates="campaigns")
+    associated_influencers = relationship('Influencer', secondary="Association_Influencers", backref='Campaigns')

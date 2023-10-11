@@ -60,7 +60,7 @@ class CampaignBase(BaseModel):
     purpose:Optional[str]
     wording:Optional[str]
     guidance:Optional[str]
-    owner_id:Optional[int]
+    owner_id:int
         
 class CampaignCreate(CampaignBase):
     pass
@@ -68,7 +68,7 @@ class CampaignCreate(CampaignBase):
 class Campaign(CampaignBase):
     id:int
     org_id:int
-    owner_id:int
+    associated_influencers:List[Influencer] = []
     
     class Config:
         orm_mode = True
@@ -126,4 +126,7 @@ class UserReturn(BaseModel):
     
     class Config:
         orm_mode = True
-
+        
+class AssociatedInfluencer(BaseModel):
+    campaign_id:int
+    influencer_id:int

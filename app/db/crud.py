@@ -38,6 +38,30 @@ def create_campaign(db: Session, item: schema.CampaignCreate, org_id:int):
     db.refresh(db_org)
     return db_org
 
+def add_influencer_to_campaign(db: Session, associated_influencer:schema.AssociatedInfluencer):
+    campaign = get_campaign(db, campaign_id=associated_influencer.campaign_id)
+    if campaign == None:
+        return None;
+    influencer = get_influencer(db=db, inf_id=associated_influencer.influencer_id)
+    campaign.associated_influencers.append(influencer)
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    return campaign
+
+
+def remove_influencer_from_campaign(db: Session, associated_influencer:schema.AssociatedInfluencer):
+    campaign = get_campaign(db, campaign_id=associated_influencer.campaign_id)
+    if campaign == None:
+        return None;
+    influencer = get_influencer(db=db, inf_id=associated_influencer.influencer_id)
+    campaign.associated_influencers.remove(influencer)
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    return campaign
+    
+
 def update_campaign(db: Session, item: schema.CampaignCreate, campaign_id:int):
     db_campaign = db.get(models.Campaign, campaign_id)
     campaign_data = item.dict(exclude_unset=True)
