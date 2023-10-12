@@ -57,3 +57,21 @@ http://127.0.0.1:8000/docs
 ```
 docker-compose exec db psql --username=fastapi --dbname=fastapi_dev
 ```
+
+### Alembic
+
+# First time setup
+
+```
+alembic stamp head
+```
+
+# New version generate 
+```
+alembic revision --autogenerate -m "#YOUR COMMENT"
+```
+
+# Migrate to Database
+```
+alembic upgrade head
+```

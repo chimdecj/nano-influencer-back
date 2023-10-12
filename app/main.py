@@ -156,31 +156,55 @@ def create_campaign(request: Request, org_id:int, campaign: schema.CampaignCreat
 def update_campaign(request: Request, campaign_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
     return crud.update_campaign(db=db, item=campaign, campaign_id=campaign_id)
 
-@app.post("/campaign/add_influencer", tags=["Campaigns"])
-def add_influencer_to_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
+# @app.post("/campaign/add_influencer", tags=["Campaigns"])
+# def add_influencer_to_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
    
-    if db_util.check_influencer_in_campaign(db=db, associated_influencer=associated_influencer):
-        return JSONResponse(status_code=300, content={
-            "status_code": 300,
-            "message": "Influencer already in campaign",
-        })
-    updated_campaign = crud.add_influencer_to_campaign(db=db, associated_influencer=associated_influencer)
+#     if db_util.check_influencer_in_campaign(db=db, associated_influencer=associated_influencer):
+#         return JSONResponse(status_code=300, content={
+#             "status_code": 300,
+#             "message": "Influencer already in campaign",
+#         })
+#     updated_campaign = crud.add_influencer_to_campaign(db=db, associated_influencer=associated_influencer)
+#     if update_campaign == None:
+#         raise HTTPException(status_code=400, detail="Campaign not found.")
+#     return JSONResponse(status_code=200, content={
+#         "status_code": 200,
+#         "message": "Success",
+#     })
+
+# @app.post("/campaign/remove_influencer", tags=["Campaigns"])
+# def remove_influencer_from_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
+#     updated_campaign = crud.remove_influencer_from_campaign(db=db, associated_influencer=associated_influencer)
+#     if update_campaign == None:
+#         raise HTTPException(status_code=400, detail="Campaign not found.")
+#     return JSONResponse(status_code=200, content={
+#         "status_code": 200,
+#         "message": "Success",
+#     })
+    
+@app.post("/campaign/update_influencer", tags=["Campaigns"])
+def update_influencer_to_campaign(request: Request, campaign_id:int, influencer_ids: List[str], db: Session = Depends(get_database_session)):
+   
+    # if db_util.check_influencer_in_campaign(db=db, associated_influencer=associated_influencer):
+    #     return JSONResponse(status_code=300, content={
+    #         "status_code": 300,
+    #         "message": "Influencer already in campaign",
+    #     })
+    updated_campaign = crud.update_influencer_to_campaign(db=db, campaign_id=campaign_id, influencer_ids=influencer_ids)
     if update_campaign == None:
         raise HTTPException(status_code=400, detail="Campaign not found.")
+    
     return JSONResponse(status_code=200, content={
         "status_code": 200,
         "message": "Success",
     })
     
-@app.post("/campaign/remove_influencer", tags=["Campaigns"])
-def remove_influencer_from_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
-    updated_campaign = crud.remove_influencer_from_campaign(db=db, associated_influencer=associated_influencer)
-    if update_campaign == None:
-        raise HTTPException(status_code=400, detail="Campaign not found.")
-    return JSONResponse(status_code=200, content={
-        "status_code": 200,
-        "message": "Success",
-    })
+    
+@app.get("/campaigns/influencers", response_model=List[schema.Influencer], tags=["Campaigns"])
+def get_campaign_influencers(campaign_id:int, db: Session = Depends(get_database_session)):
+    campaigns = crud.get_campaign_influencers(db=db, campaign_id=campaign_id)
+    return campaigns
+
 
 
 @app.post("/upload/")

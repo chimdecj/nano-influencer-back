@@ -1,6 +1,8 @@
+from typing import List
 from sqlalchemy.orm import Session
 
 from . import models, schema
+import os
 
 
 def get_org(db: Session, org_id: int):
@@ -44,6 +46,26 @@ def add_influencer_to_campaign(db: Session, associated_influencer:schema.Associa
         return None;
     influencer = get_influencer(db=db, inf_id=associated_influencer.influencer_id)
     campaign.associated_influencers.append(influencer)
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    return campaign
+
+def get_campaign_influencers(db:Session, campaign_id:int):
+    campaign = get_campaign(db, campaign_id=campaign_id)
+    if campaign == None:
+        return None;
+    return campaign.associated_influencers
+
+def update_influencer_to_campaign(db: Session, campaign_id: int, influencer_ids:List[str]):
+    campaign = get_campaign(db, campaign_id=campaign_id)
+    if campaign == None:
+        return None;
+    db.query(models.CampaignInfluencers).filter(models.CampaignInfluencers.campaign_id == campaign_id).delete()
+    for id in influencer_ids:
+        influencer = get_influencer(db=db, inf_id=id)
+        if influencer != None:
+            campaign.associated_influencers.append(influencer)
     db.add(campaign)
     db.commit()
     db.refresh(campaign)
