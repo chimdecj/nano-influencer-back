@@ -33,6 +33,9 @@ def get_campaign_by_name(db: Session, name: str, org_id:int):
 def get_campaigns_by_org_id(db: Session, org_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id).offset(skip).limit(limit).all()
 
+def get_campaigns_by_status(db: Session, org_id: int, status:int, skip: int = 0, limit: int = 100):
+    return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, status==status).offset(skip).limit(limit).all()
+
 def create_campaign(db: Session, item: schema.CampaignCreate, org_id:int):
     db_org = models.Campaign(**item.dict(), org_id=org_id)
     db.add(db_org)
@@ -94,6 +97,14 @@ def update_campaign(db: Session, item: schema.CampaignCreate, campaign_id:int):
     db.refresh(db_campaign)
     return db_campaign
 
+def submit_campaign(db: Session, campaign_id:int):
+    db_campaign = db.get(models.Campaign, campaign_id)
+    db_campaign.status = 1
+    db.add(db_campaign)
+    db.commit()
+    db.refresh(db_campaign)
+    return db_campaign
+
 def get_user_by_id(db: Session, id: int):
     return db.query(models.User).filter(models.User.id == id).first()
 
@@ -126,6 +137,13 @@ def get_influencer(db: Session, inf_id: int):
 def get_influencer_list(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Influencer).offset(skip).limit(limit).all()
 
+def get_influencer_campaigns(db: Session, influencer_id:int):
+    db_campaigns =  db.query(models.Campaign)\
+        .join(models.CampaignInfluencers)\
+            .join(models.Influencer).filter(models.Influencer.id == influencer_id).all()
+    print(db_campaigns)
+    return db_campaigns
+
 def create_influencer(db: Session, item: schema.InfluencerCreate):
     db_influencer = models.Influencer(**item.dict())
     db.add(db_influencer)
@@ -141,6 +159,21 @@ def get_user_social_accounts_by_type(db: Session, inf_id: int, type: int):
 
 def create_social_account(db: Session, item: schema.SocialAccountCreate, inf_id: int):
     db_user = models.SocialAccount(**item.dict(), inf_id=inf_id)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def get_campaign_images(db: Session, campaign_id:int):
+    db_campaign = db.get(models.Campaign, campaign_id)
+    return db_campaign.campaign_images()
+
+def delete_campaign_image(db: Session, image_id: int):
+    db.query(models.CampaignImage).filter(models.CampaignImage.id == image_id).delete()
+    db.commit()
+
+def create_campaign_image(db: Session, url:str, campaign_id:int):
+    db_user = models.CampaignImage(url=url, campaign_id=campaign_id)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

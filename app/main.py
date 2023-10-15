@@ -113,6 +113,10 @@ def get_influencer_by_id(inf_id:int, db: Session = Depends(get_database_session)
 def get_influencer_list(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
     return crud.get_influencer_list(db=db)
 
+@app.get("/influencer/campaigns", response_model=List[schema.Campaign], tags=["Influencers"])
+def get_influencer_campaigns(influencer_id:int, db: Session = Depends(get_database_session)):
+    return crud.get_influencer_campaigns(db=db, influencer_id=influencer_id)
+
 @app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session)):
     accounts = crud.get_user_social_accounts(db, inf_id==inf_id)
@@ -140,9 +144,19 @@ def read_orgs(skip: int = 0, limit: int = 100, db: Session = Depends(get_databas
     orgs = crud.get_orgs(db, skip=skip, limit=limit)
     return orgs
 
+@app.get("/campaign/", response_model=schema.Campaign, tags=["Campaigns"])
+def get_campaign(campaign_id:int, db: Session = Depends(get_database_session)):
+    campaign = crud.get_campaign(db=db, campaign_id=campaign_id)
+    return campaign
+
 @app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
 def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
     campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
+    return campaigns
+
+@app.get("/campaigns/status", response_model=List[schema.Campaign], tags=["Campaigns"])
+def get_campaigns_by_status(org_id:int, status:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
+    campaigns = crud.get_campaigns_by_status(db, org_id==org_id, status=status, skip=skip, limit=limit)
     return campaigns
 
 @app.post("/campaign/create", response_model=schema.Campaign, tags=["Campaigns"])
@@ -155,6 +169,10 @@ def create_campaign(request: Request, org_id:int, campaign: schema.CampaignCreat
 @app.post("/campaign/update", response_model=schema.Campaign, tags=["Campaigns"])
 def update_campaign(request: Request, campaign_id:int, campaign: schema.CampaignCreate, db: Session = Depends(get_database_session)):
     return crud.update_campaign(db=db, item=campaign, campaign_id=campaign_id)
+
+@app.post("/campaign/submit", response_model=schema.Campaign, tags=["Campaigns"])
+def submit_campaign(request: Request, campaign_id:int, db: Session = Depends(get_database_session)):
+    return crud.submit_campaign(db=db, campaign_id=campaign_id)
 
 # @app.post("/campaign/add_influencer", tags=["Campaigns"])
 # def add_influencer_to_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
@@ -200,12 +218,41 @@ def update_influencer_to_campaign(request: Request, campaign_id:int, influencer_
     })
     
     
-@app.get("/campaigns/influencers", response_model=List[schema.Influencer], tags=["Campaigns"])
+@app.get("/campaign/influencers", response_model=List[schema.Influencer], tags=["Campaigns"])
 def get_campaign_influencers(campaign_id:int, db: Session = Depends(get_database_session)):
     campaigns = crud.get_campaign_influencers(db=db, campaign_id=campaign_id)
     return campaigns
 
+@app.post("/campaign/upload_image", response_model=schema.CampaignImage, tags=["Campaigns"])
+async def campaign_upload_image(request: Request, campaign_id:int, file: UploadFile = File(None), db: Session = Depends(get_database_session)):
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
 
+    # move the cursor back to the beginning
+    await file.seek(0)
+
+    if file_size > 2 * 1024 * 1024:
+        # more than 2 MB
+        raise HTTPException(status_code=400, detail="File too large")
+
+    # check the content type (MIME type)
+    content_type = file.content_type
+    if content_type not in ["image/jpeg", "image/png", "image/gif"]:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    filename = create_image(file=file)
+    url = str(request.url).replace("/campaign/upload_image?campaign_id=" + str(campaign_id), "/static/") + filename
+    db_campaign_image = crud.create_campaign_image(db=db, url=url, campaign_id=campaign_id)
+    return db_campaign_image
+
+
+@app.post("/campaign/delete_image", tags=["Campaigns"])
+async def campaign_delete_image(request: Request, image_id:int, db: Session = Depends(get_database_session)):
+    crud.delete_campaign_image(db=db, image_id=image_id)
+    return JSONResponse(status_code=200, content={
+        "status_code": 200,
+        "message": "Success",
+    })
 
 @app.post("/upload/")
 async def create_upload_file(request: Request, file: UploadFile = File(None)):
@@ -224,26 +271,28 @@ async def create_upload_file(request: Request, file: UploadFile = File(None)):
     if content_type not in ["image/jpeg", "image/png", "image/gif"]:
         raise HTTPException(status_code=400, detail="Invalid file type")
 
+    filename = create_image(file=file)
+    url = str(request.url).replace("upload", "static")
+    return {"file_url": url + filename}
+
+
+def create_image(file: UploadFile):
     # do something with the valid file
     upload_dir = os.path.join(os.getcwd(), "./static")
     # Create the upload directory if it doesn't exist
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
 
-    # get the destination path
     file_extension = pathlib.Path(file.filename).suffix
-
     filename = get_randomname_string() + file_extension
+    
     dest = os.path.join(upload_dir, filename)
-    print(dest)
 
     # copy the file contents
     with open(dest, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    url = str(request.url).replace("upload", "static")
-    return {"file_url": url + filename}
-
-
+    return filename
+    
 def get_randomname_string():
     # choose from all lowercase letter
     letters = string.ascii_lowercase + string.digits

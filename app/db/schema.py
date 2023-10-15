@@ -3,6 +3,18 @@ from datetime import datetime, date
 from pydantic import BaseModel
 from pydantic import Field
 
+class CampaignImageBase(BaseModel):
+    url: str
+    campaign_id: int
+    
+    class Config:
+        orm_mode = True
+
+class CampaignImageCreate(CampaignImageBase):
+    pass
+    
+class CampaignImage(CampaignImageBase):
+    id: int
 
 class SocialAccountBase(BaseModel):
     account_type:int = Field(description="0 bol Instagram")
@@ -45,6 +57,7 @@ class InfluencerCreate(InfluencerBase):
     pass
 
 class Influencer(InfluencerBase):
+    id:int
     socialAccounts:List[SocialAccount] = []
     
         
@@ -65,10 +78,13 @@ class CampaignBase(BaseModel):
 class CampaignCreate(CampaignBase):
     pass
 
+
+
 class Campaign(CampaignBase):
     id:int
     org_id:int
     associated_influencers:List[Influencer] = []
+    campaign_images:List[CampaignImage] = []
     
     class Config:
         orm_mode = True
