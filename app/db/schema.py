@@ -65,7 +65,7 @@ class CampaignBase(BaseModel):
     status:int  = Field(description="#0-draft, 1-Submitted, 2-Active, 3-Finished")
     type:Optional[int] = Field(description="Product type #1-Ez Awareness")
     platform_type:Optional[int] = Field(description = "0- Instagram")
-    title:str
+    title:Optional[str]
     start_date_time:Optional[datetime]
     end_date_time:Optional[datetime]
     created_date:Optional[datetime]
