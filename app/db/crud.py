@@ -34,7 +34,7 @@ def get_campaigns_by_org_id(db: Session, org_id: int, skip: int = 0, limit: int 
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id).offset(skip).limit(limit).all()
 
 def get_campaigns_by_status(db: Session, org_id: int, status:int, skip: int = 0, limit: int = 100):
-    return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, status==status).offset(skip).limit(limit).all()
+    return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, models.Campaign.status==status).offset(skip).limit(limit).all()
 
 def create_campaign(db: Session, item: schema.CampaignCreate, org_id:int):
     db_org = models.Campaign(**item.dict(), org_id=org_id)
@@ -140,7 +140,7 @@ def get_influencer_list(db: Session, skip: int = 0, limit: int = 100):
 def get_influencer_campaigns(db: Session, influencer_id:int):
     db_campaigns =  db.query(models.Campaign)\
         .join(models.CampaignInfluencers)\
-            .join(models.Influencer).filter(models.Influencer.id == influencer_id).all()
+            .join(models.Influencer).filter(models.Influencer.id == influencer_id, models.Campaign.status != 0).all()
     print(db_campaigns)
     return db_campaigns
 
