@@ -15,6 +15,7 @@ from .db.database import SessionLocal, engine
 
 import string, random, pathlib
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 
 # models.Base.metadata.create_all(bind=engine)
@@ -44,6 +45,8 @@ app = FastAPI(
     title="Influencer Marketing Platform API",
     openapi_tags=tags_metadata
 )
+
+app.add_middleware(HTTPSRedirectMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -156,7 +159,7 @@ def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = De
 
 @app.get("/campaigns/status", response_model=List[schema.Campaign], tags=["Campaigns"])
 def get_campaigns_by_status(org_id:int, status:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session)):
-    campaigns = crud.get_campaigns_by_status(db, org_id==org_id, status=status, skip=skip, limit=limit)
+    campaigns = crud.get_campaigns_by_status(db, org_id=org_id, status=status, skip=skip, limit=limit)
     return campaigns
 
 @app.post("/campaign/create", response_model=schema.Campaign, tags=["Campaigns"])
