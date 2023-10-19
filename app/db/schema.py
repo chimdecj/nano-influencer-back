@@ -62,7 +62,7 @@ class Influencer(InfluencerBase):
     
         
 class CampaignBase(BaseModel):
-    status:int  = Field(description="#0-draft, 1-Submitted, 2-Active, 3-Finished")
+    status:Optional[int] = Field(description="#0-draft, 1-Submitted, 2-Active, 3-Finished")
     type:Optional[int] = Field(description="Product type #1-Ez Awareness")
     platform_type:Optional[int] = Field(description = "0- Instagram")
     title:Optional[str]
@@ -77,8 +77,6 @@ class CampaignBase(BaseModel):
         
 class CampaignCreate(CampaignBase):
     pass
-
-
 
 class Campaign(CampaignBase):
     id:int
