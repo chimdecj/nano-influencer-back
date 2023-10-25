@@ -22,9 +22,23 @@ def create_orgs(db: Session, item: schema.OrganizationCreate):
     db.refresh(db_org)
     return db_org
 
+def update_org(db: Session, org_id: int, item: schema.OrganizationCreate):
+    db_org = db.get(models.Organization, org_id)
+    org_data = item.dict(exclude_unset=True)
+    for key, value in org_data.items():
+        setattr(db_org, key, value)
+    db.add(db_org)
+    db.commit()
+    db.refresh(db_org)
+    return db_org
+
 
 def get_campaign(db: Session, campaign_id: int):
+    """
+    Get campaign by ID
+    """
     return db.query(models.Campaign).filter(models.Campaign.id == campaign_id).first()
+
 
 def get_campaign_by_name(db: Session, name: str, org_id:int):
     return db.query(models.Campaign).filter(models.Campaign.title == name, models.Campaign.org_id==org_id).first()
@@ -143,7 +157,18 @@ def get_influencer_campaigns(db: Session, influencer_id:int):
             .join(models.Influencer).filter(models.Influencer.id == influencer_id, models.Campaign.status != 0).order_by(models.Campaign.created_date.desc()).all()
     return db_campaigns
 
-def create_influencer(db: Session, item: schema.InfluencerCreate):
+def update_influencer(db: Session, inf_id:int,  item: schema.InfluencerCreate):
+    db_influencer = db.get(models.Influencer, inf_id)
+    inf_data = item.dict(exclude_unset=True)
+    for key, value in inf_data.items():
+        setattr(db_influencer, key, value)
+    db.add(db_influencer)
+    db.commit()
+    db.refresh(db_influencer)
+    return db_influencer
+
+
+def create_influencer(db: Session, influencer_id:int, item: schema.InfluencerCreate):
     db_influencer = models.Influencer(**item.dict())
     db.add(db_influencer)
     db.commit()

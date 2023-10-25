@@ -6,3 +6,6 @@ def check_influencer_in_campaign(db: Session, associated_influencer:schema.Assoc
     if campaign_influencer:
         return True
     return False
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()

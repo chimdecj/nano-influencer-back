@@ -34,21 +34,21 @@ class SocialAccount(SocialAccountBase):
 
 
 class InfluencerBase(BaseModel):
-    phonenumber:str
-    email:str
-    first_name:str
-    last_name:str
-    dateofbirth:date
-    gender: int = Field(description="0 bol eregtei, 1 bol emegtei")
-    category: str
-    profession: str
-    work_position: str
-    work_name: str
-    work_address: str
-    family_count: str
-    home_address: str
-    bank: str
-    bankaccount: str
+    phonenumber:Optional[str]
+    email:Optional[str]
+    first_name:Optional[str]
+    last_name:Optional[str]
+    dateofbirth:Optional[date]
+    gender: Optional[int] = Field(description="0 bol eregtei, 1 bol emegtei")
+    category: Optional[str]
+    profession: Optional[str]
+    work_position: Optional[str]
+    work_name: Optional[str]
+    work_address: Optional[str]
+    family_count: Optional[str]
+    home_address: Optional[str]
+    bank: Optional[str]
+    bankaccount: Optional[str]
     
     class Config:
         orm_mode = True
@@ -88,16 +88,16 @@ class Campaign(CampaignBase):
         orm_mode = True
         
 class OrganizationBase(BaseModel):
-    name:str
-    industry:str
-    sub_industry:str
-    instagram_profile:str
-    facebook_profile:str
-    tiktok_profile:str
-    preffered_category:str
-    offce_address:str
-    phonenumber:str
-    email:str
+    name:Optional[str] = None
+    industry:Optional[str] = None
+    sub_industry:Optional[str] = None
+    instagram_profile:Optional[str] = None
+    facebook_profile:Optional[str] = None
+    tiktok_profile:Optional[str] = None
+    preffered_category:Optional[str] = None
+    offce_address:Optional[str] = None
+    phonenumber:Optional[str] = None
+    email:Optional[str] = None
         
         
 class OrganizationCreate(OrganizationBase):
