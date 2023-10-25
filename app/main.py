@@ -50,7 +50,7 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
-# app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
