@@ -124,7 +124,7 @@ def get_user_by_name(request: Request, id: int, db: Session = Depends(get_databa
     return db_user
     
 @app.post("/user/", response_model=schema.UserReturn, tags=["Users"])
-def create_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session), authorization: str = Depends(get_authorization_header)):
+def create_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session)):
     db_user = crud.get_user_by_name(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
