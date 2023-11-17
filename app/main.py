@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Form, Depends, UploadFile, File, Header
+from fastapi import FastAPI, HTTPException, Request, Form, Depends, UploadFile, File, Header, status
 from starlette.responses import Response, RedirectResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
 from starlette.staticfiles import StaticFiles
@@ -74,22 +74,47 @@ def get_database_session():
 
 # Define a dependency to check if a user is authenticated
 def get_current_user( db: Session = Depends(get_database_session), token: str = Depends(oauth2_scheme)):
-    payload = jwt.decode(token, "secret", algorithms=["HS256"])
-    username = payload.get("sub")
-
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, "secret", algorithms=["HS256"])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        # token_data = TokenData(username=username)
+    except Exception as e:
+        print(e)
+        raise credentials_exception
     user = db_util.get_user_by_username(db=db, username=username)
     if user == None:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise credentials_exception
 
-    return username
+    return user
 
-def get_authorization_header(authorization: str = Depends(security)):
+def get_authorization_header(authorization: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(authorization, "secret", algorithms=["HS256"])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        # token_data = TokenData(username=username)
+    except Exception as e:
+        raise credentials_exception
     return authorization
         
 # Add OAuth2 authentication to routes
-@app.get("/users/me")
-async def read_users_me(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
+@app.get("/users/me", response_model=schema.UserReturn)
+async def read_users_me(db: Session = Depends(get_database_session), authorization: str = Depends(get_authorization_header)):
+    user = get_current_user(db=db, token=authorization)
+    return user
 
 # Create endpoint for generating tokens
 @app.post("/login") 
@@ -101,9 +126,9 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends(), db: S
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     hashed_password = utils.hash_password(form_data.password)
-    print(hashed_password, form_data.password)
-    if utils.check_password(form_data.password, hashed_password) == False:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    print(hashed_password, user.password)
+    if utils.check_password(hashed_password, user.password) == False:
+        raise HTTPException(status_code=400, detail="Incorrect password")
 
     access_token = utils.generate_access_token(data={"sub": user.username})
     return {"access_token": access_token}

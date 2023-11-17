@@ -11,7 +11,8 @@ def hash_password(password):
     return hash.decode('utf-8')
 
 def check_password(password, hashed_password): 
-    return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    return password == hashed_password
+    # return bcrypt.checkpw(hashed_password.encode("utf-8"), password.encode("utf-8"))
 
 def generate_access_token(data: dict, expires_delta: int = 3600):
     
