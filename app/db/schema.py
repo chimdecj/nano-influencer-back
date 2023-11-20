@@ -135,6 +135,7 @@ class UserReturn(BaseModel):
     id:int
     username: str
     user_type: int
+    user_status: Optional[int]  = 0
     org_id:Optional[int] = None
     inf_id:Optional[int] = None
     

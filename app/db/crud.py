@@ -140,6 +140,7 @@ def update_user(db: Session, user_id:int, inf_id:int = None, org_id:int = None):
         db_user.inf_id = inf_id
     if org_id != None:
         db_user.org_id = org_id
+    db_user.user_status = 1
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

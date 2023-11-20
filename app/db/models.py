@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String(50), unique=True)
     password = Column(String(120))
     user_type = Column(Integer) #0-Org 1-Inf
+    user_status = Column(Integer, default=0) #0-Org 1-Inf
     org_id = Column(Integer, ForeignKey("Organization.id"))
     inf_id = Column(Integer, ForeignKey("Influencer.id"))
 
