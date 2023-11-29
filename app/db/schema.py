@@ -66,8 +66,8 @@ class CampaignBase(BaseModel):
     type:Optional[int] = Field(description="Product type #1-Ez Awareness")
     platform_type:Optional[int] = Field(description = "0- Instagram")
     title:Optional[str]
-    start_date_time:Optional[datetime]
-    end_date_time:Optional[datetime]
+    start_date_time:Optional[date]
+    end_date_time:Optional[date]
     created_date:Optional[datetime]
     updated_date:Optional[datetime]
     purpose:Optional[str]

@@ -1,5 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
+from datetime import date
 
 from . import models, schema
 import os
@@ -48,7 +49,12 @@ def get_campaigns_by_org_id(db: Session, org_id: int, skip: int = 0, limit: int 
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id).order_by(models.Campaign.created_date.desc()).offset(skip).limit(limit).all()
 
 def get_campaigns_by_status(db: Session, org_id: int, status:int, skip: int = 0, limit: int = 100):
+    
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, models.Campaign.status==status).order_by(models.Campaign.created_date.desc()).offset(skip).limit(limit).all()
+ 
+def get_active_submitted_campaigns(db: Session, org_id: int, skip: int = 0, limit: int = 100):
+    today = date.today()
+    return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, models.Campaign.status==1, models.Campaign.start_date_time <= today, models.Campaign.end_date_time >= today).order_by(models.Campaign.created_date.desc()).offset(skip).limit(limit).all()
 
 def create_campaign(db: Session, item: schema.CampaignCreate, org_id:int):
     db_org = models.Campaign(**item.dict(), org_id=org_id)
@@ -156,6 +162,13 @@ def get_influencer_campaigns(db: Session, influencer_id:int):
     db_campaigns =  db.query(models.Campaign)\
         .join(models.CampaignInfluencers)\
             .join(models.Influencer).filter(models.Influencer.id == influencer_id, models.Campaign.status != 0).order_by(models.Campaign.created_date.desc()).all()
+    return db_campaigns
+
+def get_influencer_campaigns_active_submitted(db: Session, influencer_id:int):
+    today = date.today()
+    db_campaigns =  db.query(models.Campaign)\
+        .join(models.CampaignInfluencers)\
+            .join(models.Influencer).filter(models.Influencer.id == influencer_id, models.Campaign.status == 1,  models.Campaign.start_date_time <= today, models.Campaign.end_date_time >= today).order_by(models.Campaign.created_date.desc()).all()
     return db_campaigns
 
 def update_influencer(db: Session, inf_id:int,  item: schema.InfluencerCreate):

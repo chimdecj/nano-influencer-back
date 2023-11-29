@@ -71,14 +71,14 @@ def get_database_session():
         db.close()
 
 # Define a dependency to check if a user is authenticated
-def get_current_user( db: Session = Depends(get_database_session), token: str = Depends(security)):
+def get_current_user( db: Session = Depends(get_database_session), token: HTTPBasicCredentials = Depends(security)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, "secret", algorithms=["HS256"])
+        payload = jwt.decode(jwt=token.credentials, key="secret", algorithms=["HS256"])
         username: str = payload.get("sub")
         
         if username is None:
@@ -102,7 +102,6 @@ def get_authorization_header(authorization: HTTPBasicCredentials = Depends(secur
     print(authorization)
 
     token = authorization.credentials
-    print(token)
 
     try:
         payload = jwt.decode(token, "secret", algorithms=["HS256"])
@@ -126,16 +125,16 @@ async def read_users_me(db: Session = Depends(get_database_session), authorizati
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_database_session)):
     # Some logic to generate and return access token
     user = db_util.get_user_by_username(db=db, username=form_data.username)
-    print(user)
     if user == None:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     hashed_password = utils.hash_password(form_data.password)
-    print(hashed_password, user.password)
     if utils.check_password(hashed_password, user.password) == False:
         raise HTTPException(status_code=400, detail="Incorrect password")
-
-    access_token = utils.generate_access_token(data={"sub": user.username})
+    user_type = user.user_type
+    if user_type == None:
+        user_type = 0
+    access_token = utils.generate_access_token(data={"sub": user.username, "user_type":user_type})
     return {"access_token": access_token}
 
 
@@ -195,6 +194,10 @@ def get_influencer_list(skip: int = 0, limit: int = 100, db: Session = Depends(g
 def get_influencer_campaigns(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer_campaigns(db=db, influencer_id=influencer_id)
 
+@app.get("/influencer/campaigns/active_submitted", response_model=List[schema.Campaign], tags=["Influencers"])
+def get_influencer_campaigns_active_submitted(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    return crud.get_influencer_campaigns_active_submitted(db=db, influencer_id=influencer_id)
+
 @app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     accounts = crud.get_user_social_accounts(db, inf_id==inf_id)
@@ -243,6 +246,11 @@ def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = De
 @app.get("/campaigns/status", response_model=List[schema.Campaign], tags=["Campaigns"])
 def get_campaigns_by_status(org_id:int, status:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     campaigns = crud.get_campaigns_by_status(db, org_id=org_id, status=status, skip=skip, limit=limit)
+    return campaigns
+
+@app.get("/campaigns/active_sumbitted", response_model=List[schema.Campaign], tags=["Campaigns"])
+def get_campaigns_by_active_sumbitted(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    campaigns = crud.get_active_submitted_campaigns(db, org_id=org_id, skip=skip, limit=limit)
     return campaigns
 
 @app.post("/campaign/create", response_model=schema.Campaign, tags=["Campaigns"])
