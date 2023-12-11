@@ -138,14 +138,14 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends(), db: S
     return {"access_token": access_token}
 
 
-# @app.get("/user/{id}")
-# def read_user_by_id(request: Request, id: int, db: Session = Depends(get_database_session)):
-#     record = db.query(User).filter(User.id==id).first()
-#     return JSONResponse(status_code=200, content={
-#         "status_code": 200,
-#         "message": "success",
-#         "user": jsonable_encoder(record)
-#     })
+# # @app.get("/user/{id}")
+# # def read_user_by_id(request: Request, id: int, db: Session = Depends(get_database_session)):
+# #     record = db.query(User).filter(User.id==id).first()
+# #     return JSONResponse(status_code=200, content={
+# #         "status_code": 200,
+# #         "message": "success",
+# #         "user": jsonable_encoder(record)
+# #     })
     
 @app.get("/user/", response_model=schema.UserReturn, tags=["Users"])
 def get_user_by_name(request: Request, id: int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
@@ -161,12 +161,12 @@ def create_user(request: Request, user: schema.UserCreate, db: Session = Depends
     setattr(user, "password", utils.hash_password(user.password))
     return crud.create_user(db=db, item=user)
 
-# @app.patch("/user/", response_model=schema.User, tags=["Users"])
-# def update_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session)):
-#     db_user = crud.get_user_by_name(db, username=user.username)
-#     if db_user == None:
-#         raise HTTPException(status_code=400, detail="Username not registered")
-#     return crud.create_user(db=db, item=user)
+# # @app.patch("/user/", response_model=schema.User, tags=["Users"])
+# # def update_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session)):
+# #     db_user = crud.get_user_by_name(db, username=user.username)
+# #     if db_user == None:
+# #         raise HTTPException(status_code=400, detail="Username not registered")
+# #     return crud.create_user(db=db, item=user)
 
 @app.post("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
 def create_influencer(request: Request, user_id: int, influencer_item: schema.InfluencerCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
@@ -190,13 +190,21 @@ def get_influencer_by_id(inf_id:int, db: Session = Depends(get_database_session)
 def get_influencer_list(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer_list(db=db)
 
-@app.get("/influencer/campaigns", response_model=List[schema.Campaign], tags=["Influencers"])
+@app.get("/influencer/campaigns", response_model=List[schema.CampaignSubmitted], tags=["Influencers"])
 def get_influencer_campaigns(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer_campaigns(db=db, influencer_id=influencer_id)
 
-@app.get("/influencer/campaigns/active_submitted", response_model=List[schema.Campaign], tags=["Influencers"])
+@app.get("/influencer/campaigns/active_submitted", response_model=List[schema.CampaignSubmitted], tags=["Influencers"])
 def get_influencer_campaigns_active_submitted(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer_campaigns_active_submitted(db=db, influencer_id=influencer_id)
+
+@app.get("/influencer/campaigns/stories", response_model=List[schema.CampaignStory], tags=["Influencers"])
+def get_influencer_campaigns_stories(influencer_id:int, campaign_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    return crud.get_influencer_campaign_stories(db=db, influencer_id=influencer_id, campaign_id=campaign_id)
+
+@app.get("/influencer/stories", response_model=List[schema.CampaignStory], tags=["Influencers"])
+def get_influencer_stories(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    return crud.get_influencer_submitted_stories(db=db, influencer_id=influencer_id)
 
 @app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
@@ -248,7 +256,7 @@ def get_campaigns_by_status(org_id:int, status:int, skip: int = 0, limit: int = 
     campaigns = crud.get_campaigns_by_status(db, org_id=org_id, status=status, skip=skip, limit=limit)
     return campaigns
 
-@app.get("/campaigns/active_sumbitted", response_model=List[schema.Campaign], tags=["Campaigns"])
+@app.get("/campaigns/active_sumbitted", response_model=List[schema.CampaignSubmitted], tags=["Campaigns"])
 def get_campaigns_by_active_sumbitted(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     campaigns = crud.get_active_submitted_campaigns(db, org_id=org_id, skip=skip, limit=limit)
     return campaigns
@@ -267,6 +275,18 @@ def update_campaign(request: Request, campaign_id:int, campaign: schema.Campaign
 @app.post("/campaign/submit", response_model=schema.Campaign, tags=["Campaigns"])
 def submit_campaign(request: Request, campaign_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.submit_campaign(db=db, campaign_id=campaign_id)
+
+@app.get("/campaigns/stories", response_model=List[schema.CampaignStory], tags=["Campaigns"])
+def get_campaign_stories(campaign_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    campaigns = crud.get_campaigns_stories(db, campaign_id=campaign_id, skip=skip, limit=limit)
+    return campaigns
+
+@app.post("/story/create", response_model=schema.CampaignStory, tags=["Campaigns"])
+def create_campaign(request: Request, campaign: schema.CampaignStoryCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    db_story = crud.get_story_by_link(db, name=campaign.original_link)
+    if db_story:
+        raise HTTPException(status_code=400, detail="Story with this link already created")
+    return crud.create_story(db=db, item=campaign)
 
 # @app.post("/campaign/add_influencer", tags=["Campaigns"])
 # def add_influencer_to_campaign(request: Request, associated_influencer: schema.AssociatedInfluencer, db: Session = Depends(get_database_session)):
@@ -339,6 +359,28 @@ async def campaign_upload_image(request: Request, campaign_id:int, file: UploadF
     db_campaign_image = crud.create_campaign_image(db=db, url=url, campaign_id=campaign_id)
     return db_campaign_image
 
+# @app.post("/campaign/story/video_upload", response_model=schema.CampaignImage, tags=["Campaigns"])
+# async def campaign_story_video(request: Request, campaign_id:int, file: UploadFile = File(None), db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+#     file.file.seek(0, 2)
+#     file_size = file.file.tell()
+
+#     # move the cursor back to the beginning
+#     await file.seek(0)
+
+#     if file_size > 10 * 1024 * 1024:
+#         # more than 2 MB
+#         raise HTTPException(status_code=400, detail="File too large")
+
+#     # check the content type (MIME type)
+#     content_type = file.content_type
+#     if content_type not in ["video/mp4", "video/quicktime"]:
+#         raise HTTPException(status_code=400, detail="Invalid file type")
+
+#     filename = create_image(file=file)
+#     url = str(request.url).replace("/campaign/story?campaign_id=" + str(campaign_id), "/static/") + filename
+#     db_campaign_image = crud.create_campaign_image(db=db, url=url, campaign_id=campaign_id)
+#     return db_campaign_image
+
 
 @app.post("/campaign/delete_image", tags=["Campaigns"])
 async def campaign_delete_image(request: Request, image_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
@@ -367,6 +409,27 @@ async def create_upload_file(request: Request, file: UploadFile = File(None), au
 
     filename = create_image(file=file)
     url = str(request.url).replace("upload", "static")
+    return {"file_url": url + filename}
+
+@app.post("/video_upload/")
+async def create_upload_video(request: Request, file: UploadFile = File(None), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+
+    # move the cursor back to the beginning
+    await file.seek(0)
+
+    if file_size > 10 * 1024 * 1024:
+        # more than 2 MB
+        raise HTTPException(status_code=400, detail="File too large")
+
+    # check the content type (MIME type)
+    content_type = file.content_type
+    if content_type not in ["video/mp4", "video/quicktime"]:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    filename = create_image(file=file)
+    url = str(request.url).replace("video_upload", "static")
     return {"file_url": url + filename}
 
 

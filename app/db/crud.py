@@ -44,6 +44,9 @@ def get_campaign(db: Session, campaign_id: int):
 def get_campaign_by_name(db: Session, name: str, org_id:int):
     return db.query(models.Campaign).filter(models.Campaign.title == name, models.Campaign.org_id==org_id).first()
 
+def get_story_by_link(db: Session, original_link: str):
+    return db.query(models.CampaignStory).filter(models.CampaignStory.original_link == original_link).first()
+
 
 def get_campaigns_by_org_id(db: Session, org_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id).order_by(models.Campaign.created_date.desc()).offset(skip).limit(limit).all()
@@ -56,12 +59,29 @@ def get_active_submitted_campaigns(db: Session, org_id: int, skip: int = 0, limi
     today = date.today()
     return db.query(models.Campaign).filter(models.Campaign.org_id == org_id, models.Campaign.status==1, models.Campaign.start_date_time <= today, models.Campaign.end_date_time >= today).order_by(models.Campaign.created_date.desc()).offset(skip).limit(limit).all()
 
+def get_campaigns_stories(db: Session, campaign_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.CampaignStory).filter(models.CampaignStory.campaign_id == campaign_id).order_by(models.CampaignStory.created_date.desc()).offset(skip).limit(limit).all()
+ 
+def get_influencer_campaign_stories(db: Session, inf_id:int, campaign_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.CampaignStory).filter(models.CampaignStory.campaign_id == campaign_id, models.CampaignStory.inf_id ==inf_id).order_by(models.CampaignStory.created_date.desc()).offset(skip).limit(limit).all()
+ 
+def get_influencer_submitted_stories(db: Session, inf_id:int, skip: int = 0, limit: int = 100):
+    return db.query(models.CampaignStory).filter(models.CampaignStory.inf_id ==inf_id).order_by(models.CampaignStory.created_date.desc()).offset(skip).limit(limit).all()
+ 
+
 def create_campaign(db: Session, item: schema.CampaignCreate, org_id:int):
     db_org = models.Campaign(**item.dict(), org_id=org_id)
     db.add(db_org)
     db.commit()
     db.refresh(db_org)
     return db_org
+
+def create_story(db: Session, item: schema.CampaignStoryCreate):
+    db_story = models.CampaignStory(**item.dict())
+    db.add(db_story)
+    db.commit()
+    db.refresh(db_story)
+    return db_story
 
 def add_influencer_to_campaign(db: Session, associated_influencer:schema.AssociatedInfluencer):
     campaign = get_campaign(db, campaign_id=associated_influencer.campaign_id)

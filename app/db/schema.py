@@ -31,6 +31,24 @@ class SocialAccountCreate(SocialAccountBase):
 
 class SocialAccount(SocialAccountBase):
     inf_id:int
+    
+class CampaignStoryBase(BaseModel):
+    created_date:Optional[datetime]
+    original_link:Optional[str]
+    created_date:Optional[str]
+    thumb_path:Optional[str]
+    story_path:Optional[str]
+    inf_id:Optional[int]
+    campaign_id:Optional[int]
+    
+class CampaignStoryCreate(CampaignStoryBase):
+    pass
+
+class CampaignStory(CampaignStoryBase):
+    id:int
+    
+    class Config:
+        orm_mode = True
 
 
 class InfluencerBase(BaseModel):
@@ -78,14 +96,18 @@ class CampaignBase(BaseModel):
 class CampaignCreate(CampaignBase):
     pass
 
-class Campaign(CampaignBase):
+class CampaignSubmitted(CampaignBase):
     id:int
     org_id:int
+    
+class Campaign(CampaignSubmitted):
     associated_influencers:List[Influencer] = []
     campaign_images:List[CampaignImage] = []
     
     class Config:
         orm_mode = True
+        
+
         
 class OrganizationBase(BaseModel):
     name:Optional[str] = None
@@ -135,7 +157,7 @@ class UserReturn(BaseModel):
     id:int
     username: str
     user_type: int
-    user_status: Optional[int]  = 0
+    user_status: Optional[int] = 0
     org_id:Optional[int] = None
     inf_id:Optional[int] = None
     

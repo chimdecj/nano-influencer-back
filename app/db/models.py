@@ -84,6 +84,17 @@ class CampaignImage(Base):
     campaign_id = Column(Integer, ForeignKey("Campaign.id"))
     campaign = relationship("Campaign", back_populates="campaign_images")
     
+class CampaignStory(Base):
+    __tablename__ = "CampaignStory"
+    id = Column(Integer, primary_key=True, index=True)
+    original_link =  Column(String(500))
+    created_date = Column(DateTime())
+    thumb_path = Column(String(500))
+    story_path = Column(String(500))
+    inf_id = Column(Integer, ForeignKey("Influencer.id"))
+    campaign_id = Column(Integer, ForeignKey("Campaign.id"))
+    campaign = relationship("Campaign", back_populates="campaign_stories")
+
 class Campaign(Base):
     __tablename__ = "Campaign"
     id = Column(Integer, primary_key=True, index=True)
@@ -104,3 +115,4 @@ class Campaign(Base):
     org = relationship("Organization", back_populates="campaigns")
     associated_influencers = relationship('Influencer', secondary="Association_Influencers", backref='Campaigns')
     campaign_images = relationship('CampaignImage', back_populates="campaign")
+    campaign_stories = relationship('CampaignStory', back_populates="campaign")
