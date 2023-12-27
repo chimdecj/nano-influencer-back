@@ -202,7 +202,7 @@ def update_influencer(db: Session, inf_id:int,  item: schema.InfluencerCreate):
     return db_influencer
 
 
-def create_influencer(db: Session, influencer_id:int, item: schema.InfluencerCreate):
+def create_influencer(db: Session, item: schema.InfluencerCreate):
     db_influencer = models.Influencer(**item.dict())
     db.add(db_influencer)
     db.commit()
