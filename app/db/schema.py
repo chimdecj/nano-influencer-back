@@ -123,18 +123,21 @@ class OrganizationBase(BaseModel):
     offce_address:Optional[str] = None
     phonenumber:Optional[str] = None
     email:Optional[str] = None
+    
+    class Config:
+        orm_mode = True
         
         
 class OrganizationCreate(OrganizationBase):
     pass
 
+class OrganizationDetail(OrganizationBase):
+    id:int
+
 class Organization(OrganizationBase):
     id:int
     campaigns:List[Campaign] = []
     
-    class Config:
-        orm_mode = True
-
 
 class UserBase(BaseModel):
     username: str

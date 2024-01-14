@@ -236,6 +236,11 @@ def update_org(request: Request, org_id: int, org: schema.OrganizationCreate, db
     db_org_org = crud.update_org(db=db, org_id=org_id, item=org)
     return db_org
 
+@app.get("/organization/", response_model=schema.OrganizationDetail, tags=["Organizations"])
+def get_org(org_id: int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    orgs = crud.get_org(db, org_id=org_id)
+    return orgs
+
 @app.get("/organizations/", response_model=List[schema.Organization], tags=["Organizations"])
 def read_orgs(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     orgs = crud.get_orgs(db, skip=skip, limit=limit)
