@@ -208,7 +208,7 @@ def get_influencer_stories(influencer_id:int, db: Session = Depends(get_database
 
 @app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
-    accounts = crud.get_user_social_accounts(db, inf_id==inf_id)
+    accounts = crud.get_user_social_accounts(db, inf_id=inf_id)
     return accounts
 
 @app.post("/social_accounts/", response_model=schema.SocialAccount, tags=["Influencers"])
@@ -248,7 +248,7 @@ def get_campaign(campaign_id:int, db: Session = Depends(get_database_session), a
 
 @app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
 def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
-    campaigns = crud.get_campaigns_by_org_id(db, org_id==org_id, skip=skip, limit=limit)
+    campaigns = crud.get_campaigns_by_org_id(db, org_id=org_id, skip=skip, limit=limit)
     return campaigns
 
 @app.get("/campaigns/status", response_model=List[schema.Campaign], tags=["Campaigns"])

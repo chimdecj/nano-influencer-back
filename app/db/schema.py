@@ -92,6 +92,9 @@ class CampaignBase(BaseModel):
     wording:Optional[str]
     guidance:Optional[str]
     owner_id:int
+    
+    class Config:
+        orm_mode = True
         
 class CampaignCreate(CampaignBase):
     pass
