@@ -67,6 +67,7 @@ class InfluencerBase(BaseModel):
     home_address: Optional[str]
     bank: Optional[str]
     bankaccount: Optional[str]
+    image_url: Optional[str]
     
     class Config:
         orm_mode = True
@@ -92,6 +93,7 @@ class CampaignBase(BaseModel):
     wording:Optional[str]
     guidance:Optional[str]
     owner_id:int
+    image_url: Optional[str]
     
     class Config:
         orm_mode = True

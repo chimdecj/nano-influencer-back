@@ -36,6 +36,7 @@ class Influencer(Base):
     home_address = Column(String(300))
     bank = Column(String(50))
     bankaccount = Column(String(50))
+    image_url = Column(String(200))
     user_id = Column(Integer, ForeignKey("User.id"))
     socialAccounts = relationship("SocialAccount", back_populates="inf")
     
@@ -64,6 +65,7 @@ class Organization(Base):
     offce_address = Column(String(50))
     phonenumber = Column(String(50))
     email = Column(String(100))
+    image_url = Column(String(200))
     
     user_id =  Column(Integer, ForeignKey("User.id"))
     

@@ -234,7 +234,7 @@ def update_org(request: Request, org_id: int, org: schema.OrganizationCreate, db
     if db_org == None:
         raise HTTPException(status_code=400, detail="Org not found")
     db_org_org = crud.update_org(db=db, org_id=org_id, item=org)
-    return db_org
+    return db_org_org
 
 @app.get("/organization/", response_model=schema.OrganizationDetail, tags=["Organizations"])
 def get_org(org_id: int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
@@ -288,7 +288,7 @@ def get_campaign_stories(campaign_id:int, skip: int = 0, limit: int = 100, db: S
 
 @app.post("/story/create", response_model=schema.CampaignStory, tags=["Campaigns"])
 def create_campaign(request: Request, campaign: schema.CampaignStoryCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
-    db_story = crud.get_story_by_link(db, name=campaign.original_link)
+    db_story = crud.get_story_by_link(db, original_link=campaign.original_link)
     if db_story:
         raise HTTPException(status_code=400, detail="Story with this link already created")
     return crud.create_story(db=db, item=campaign)
