@@ -210,7 +210,7 @@ def create_influencer(db: Session, item: schema.InfluencerCreate):
     return db_influencer
 
 def get_user_social_accounts(db: Session, inf_id: int):
-    return db.query(models.SocialAccount).filter(models.SocialAccount.inf_id == inf_id).first()
+    return db.query(models.SocialAccount).filter(models.SocialAccount.inf_id == inf_id).all()
 
 def get_user_social_accounts_by_type(db: Session, inf_id: int, type: int):
     return db.query(models.SocialAccount).filter(models.SocialAccount.inf_id == inf_id, models.SocialAccount.account_type == type).first()

@@ -30,6 +30,7 @@ class SocialAccountCreate(SocialAccountBase):
     pass
 
 class SocialAccount(SocialAccountBase):
+    id: int
     inf_id:int
     
 class CampaignStoryBase(BaseModel):
@@ -125,6 +126,7 @@ class OrganizationBase(BaseModel):
     offce_address:Optional[str] = None
     phonenumber:Optional[str] = None
     email:Optional[str] = None
+    image_url:Optional[str] = None
     
     class Config:
         orm_mode = True
