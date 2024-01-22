@@ -218,6 +218,14 @@ def create_social_account(request: Request, inf_id:int, social_account: schema.S
         raise HTTPException(status_code=400, detail="This type of social account already registered on user")
     return crud.create_social_account(db=db, item=social_account, inf_id=inf_id)
 
+@app.patch("/social_accounts/", response_model=schema.SocialAccount, tags=["Influencers"])
+def update_social_account(request: Request, account_id: int, updated_data: schema.SocialAccountCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
+    db_social_account = crud.get_social_account_by(db, account_id=account_id)
+    if db_social_account == None:
+        raise HTTPException(status_code=400, detail="Social account not found")
+    db_social_account = crud.update_social_account(db=db, account_id=account_id, item=updated_data)
+    return db_social_account
+
     
 @app.post("/organization/", response_model=schema.Organization, tags=["Organizations"])
 def create_org(request: Request, user_id: int, org: schema.OrganizationCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):

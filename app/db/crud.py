@@ -212,6 +212,9 @@ def create_influencer(db: Session, item: schema.InfluencerCreate):
 def get_user_social_accounts(db: Session, inf_id: int):
     return db.query(models.SocialAccount).filter(models.SocialAccount.inf_id == inf_id).all()
 
+def get_social_account_by(db: Session, account_id: int):
+    return db.query(models.SocialAccount).filter(models.SocialAccount.id == account_id).first()
+
 def get_user_social_accounts_by_type(db: Session, inf_id: int, type: int):
     return db.query(models.SocialAccount).filter(models.SocialAccount.inf_id == inf_id, models.SocialAccount.account_type == type).first()
 
@@ -221,6 +224,16 @@ def create_social_account(db: Session, item: schema.SocialAccountCreate, inf_id:
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def update_social_account(db: Session, account_id: int, item: schema.SocialAccountCreate):
+    db_social_account = db.get(models.SocialAccount, account_id)
+    updated_data = item.dict(exclude_unset=True)
+    for key, value in updated_data.items():
+        setattr(db_social_account, key, value)
+    db.add(db_social_account)
+    db.commit()
+    db.refresh(db_social_account)
+    return db_social_account
 
 def get_campaign_images(db: Session, campaign_id:int):
     db_campaign = db.get(models.Campaign, campaign_id)

@@ -17,11 +17,11 @@ class CampaignImage(CampaignImageBase):
     id: int
 
 class SocialAccountBase(BaseModel):
-    account_type:int = Field(description="0 bol Instagram")
-    total_followers:int
-    account_profile:str
-    account_image:str
-    last_updated:datetime
+    account_type:Optional[int] = Field(description="0 bol Instagram")
+    total_followers:Optional[int]
+    account_profile:Optional[str]
+    account_image:Optional[str]
+    last_updated:Optional[datetime]
     
     class Config:
         orm_mode = True
