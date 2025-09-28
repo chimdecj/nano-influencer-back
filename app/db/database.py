@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
 
-SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root@localhost:3306/marketing_platform?charset=utf8mb4"
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL

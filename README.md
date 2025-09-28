@@ -55,7 +55,7 @@ http://127.0.0.1:8000/docs
 ### Run server
 
 ```
-docker-compose exec db psql --username=fastapi --dbname=fastapi_dev
+docker-compose exec db mysql_db --username=fastapi --dbname=marketing_platform
 ```
 
 ### Alembic
@@ -66,12 +66,14 @@ docker-compose exec db psql --username=fastapi --dbname=fastapi_dev
 alembic stamp head
 ```
 
-# New version generate 
+# New version generate
+
 ```
 alembic revision --autogenerate -m "#YOUR COMMENT"
 ```
 
 # Migrate to Database
+
 ```
 alembic upgrade head
 ```
