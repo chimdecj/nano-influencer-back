@@ -147,12 +147,12 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends(), db: S
 # #         "user": jsonable_encoder(record)
 # #     })
     
-@app.get("/user/", response_model=schema.UserReturn, tags=["Users"])
+@app.get("/user", response_model=schema.UserReturn, tags=["Users"])
 def get_user_by_name(request: Request, id: int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     db_user = crud.get_user_by_id(db=db, id=id)
     return db_user
     
-@app.post("/user/", response_model=schema.UserReturn, tags=["Users"])
+@app.post("/user", response_model=schema.UserReturn, tags=["Users"])
 def create_user(request: Request, user: schema.UserCreate, db: Session = Depends(get_database_session)):
     db_user = crud.get_user_by_name(db, username=user.username)
     if db_user:
@@ -168,13 +168,13 @@ def create_user(request: Request, user: schema.UserCreate, db: Session = Depends
 # #         raise HTTPException(status_code=400, detail="Username not registered")
 # #     return crud.create_user(db=db, item=user)
 
-@app.post("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
+@app.post("/influencer", response_model=schema.Influencer, tags=["Influencers"])
 def create_influencer(request: Request, user_id: int, influencer_item: schema.InfluencerCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     inf = crud.create_influencer(db=db, item=influencer_item)
     db_user = crud.update_user(db=db, user_id=user_id, inf_id=inf.id)
     return inf
 
-@app.patch("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
+@app.patch("/influencer", response_model=schema.Influencer, tags=["Influencers"])
 def update_influencer(request: Request, influencer_id: int, influencer_item: schema.InfluencerCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     inf = crud.get_influencer(db=db, inf_id=influencer_id)
     if inf == None:
@@ -182,7 +182,7 @@ def update_influencer(request: Request, influencer_id: int, influencer_item: sch
     inf = crud.update_influencer(db=db, inf_id=influencer_id, item=influencer_item) 
     return inf
 
-@app.get("/influencer/", response_model=schema.Influencer, tags=["Influencers"])
+@app.get("/influencer", response_model=schema.Influencer, tags=["Influencers"])
 def get_influencer_by_id(inf_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer(db=db, inf_id=inf_id)
 
@@ -206,19 +206,19 @@ def get_influencer_campaigns_stories(influencer_id:int, campaign_id:int, db: Ses
 def get_influencer_stories(influencer_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     return crud.get_influencer_submitted_stories(db=db, influencer_id=influencer_id)
 
-@app.get("/social_accounts/", response_model=List[schema.SocialAccount], tags=["Influencers"])
+@app.get("/social_accounts", response_model=List[schema.SocialAccount], tags=["Influencers"])
 def get_social_accounts(inf_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     accounts = crud.get_user_social_accounts(db, inf_id=inf_id)
     return accounts
 
-@app.post("/social_accounts/", response_model=schema.SocialAccount, tags=["Influencers"])
+@app.post("/social_accounts", response_model=schema.SocialAccount, tags=["Influencers"])
 def create_social_account(request: Request, inf_id:int, social_account: schema.SocialAccountCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     db_sa = crud.get_user_social_accounts_by_type(db, inf_id=inf_id, type=social_account.account_type)
     if db_sa:
         raise HTTPException(status_code=400, detail="This type of social account already registered on user")
     return crud.create_social_account(db=db, item=social_account, inf_id=inf_id)
 
-@app.patch("/social_accounts/", response_model=schema.SocialAccount, tags=["Influencers"])
+@app.patch("/social_accounts", response_model=schema.SocialAccount, tags=["Influencers"])
 def update_social_account(request: Request, account_id: int, updated_data: schema.SocialAccountCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     db_social_account = crud.get_social_account_by(db, account_id=account_id)
     if db_social_account == None:
@@ -227,7 +227,7 @@ def update_social_account(request: Request, account_id: int, updated_data: schem
     return db_social_account
 
     
-@app.post("/organization/", response_model=schema.Organization, tags=["Organizations"])
+@app.post("/organization", response_model=schema.Organization, tags=["Organizations"])
 def create_org(request: Request, user_id: int, org: schema.OrganizationCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     db_org = crud.get_org_by_name(db, name=org.name)
     if db_org:
@@ -236,7 +236,7 @@ def create_org(request: Request, user_id: int, org: schema.OrganizationCreate, d
     crud.update_user(db=db, user_id=user_id, org_id=db_org.id)
     return db_org
 
-@app.patch("/organization/", response_model=schema.Organization, tags=["Organizations"])
+@app.patch("/organization", response_model=schema.Organization, tags=["Organizations"])
 def update_org(request: Request, org_id: int, org: schema.OrganizationCreate, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     db_org = crud.get_org(db, org_id=org_id)
     if db_org == None:
@@ -244,22 +244,22 @@ def update_org(request: Request, org_id: int, org: schema.OrganizationCreate, db
     db_org_org = crud.update_org(db=db, org_id=org_id, item=org)
     return db_org_org
 
-@app.get("/organization/", response_model=schema.OrganizationDetail, tags=["Organizations"])
+@app.get("/organization", response_model=schema.OrganizationDetail, tags=["Organizations"])
 def get_org(org_id: int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     orgs = crud.get_org(db, org_id=org_id)
     return orgs
 
-@app.get("/organizations/", response_model=List[schema.Organization], tags=["Organizations"])
+@app.get("/organizations", response_model=List[schema.Organization], tags=["Organizations"])
 def read_orgs(skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     orgs = crud.get_orgs(db, skip=skip, limit=limit)
     return orgs
 
-@app.get("/campaign/", response_model=schema.Campaign, tags=["Campaigns"])
+@app.get("/campaign", response_model=schema.Campaign, tags=["Campaigns"])
 def get_campaign(campaign_id:int, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     campaign = crud.get_campaign(db=db, campaign_id=campaign_id)
     return campaign
 
-@app.get("/campaigns/", response_model=List[schema.Campaign], tags=["Campaigns"])
+@app.get("/campaigns", response_model=List[schema.Campaign], tags=["Campaigns"])
 def read_campaigns(org_id:int, skip: int = 0, limit: int = 100, db: Session = Depends(get_database_session), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     campaigns = crud.get_campaigns_by_org_id(db, org_id=org_id, skip=skip, limit=limit)
     return campaigns
@@ -403,7 +403,7 @@ async def campaign_delete_image(request: Request, image_id:int, db: Session = De
         "message": "Success",
     })
 
-@app.post("/upload/")
+@app.post("/upload")
 async def create_upload_file(request: Request, file: UploadFile = File(None), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     file.file.seek(0, 2)
     file_size = file.file.tell()
@@ -424,7 +424,7 @@ async def create_upload_file(request: Request, file: UploadFile = File(None), au
     url = str(request.url).replace("upload", "static")
     return {"file_url": url + filename}
 
-@app.post("/video_upload/")
+@app.post("/video_upload")
 async def create_upload_video(request: Request, file: UploadFile = File(None), authorization: HTTPBasicCredentials = Depends(get_authorization_header)):
     file.file.seek(0, 2)
     file_size = file.file.tell()
