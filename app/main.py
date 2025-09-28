@@ -13,7 +13,7 @@ from .db.database import SessionLocal, engine
 import json, shutil, os
 import string, random, pathlib, jwt
 from fastapi.middleware.cors import CORSMiddleware
-# from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPBasicCredentials
 
@@ -48,7 +48,7 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
-# app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
