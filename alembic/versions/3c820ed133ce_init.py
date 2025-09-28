@@ -20,6 +20,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table(
+        'User',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('username', sa.String(length=50), nullable=True),
+        sa.Column('password', sa.String(length=120), nullable=True),
+        sa.Column('user_type', sa.Integer(), nullable=True),
+        sa.Column('user_status', sa.Integer(), nullable=True),
+        sa.Column('org_id', sa.Integer(), nullable=True),
+        sa.Column('inf_id', sa.Integer(), nullable=True),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('username')
+    )
+    op.create_index(op.f('ix_User_id'), 'User', ['id'], unique=False)
+    op.create_table(
         'Organization',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(length=150), nullable=True),
@@ -34,7 +47,6 @@ def upgrade() -> None:
         sa.Column('email', sa.String(length=100), nullable=True),
         sa.Column('image_url', sa.String(length=200), nullable=True),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['user_id'], ['User.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
@@ -57,24 +69,8 @@ def upgrade() -> None:
         sa.Column('bankaccount', sa.String(length=50), nullable=True),
         sa.Column('image_url', sa.String(length=200), nullable=True),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['user_id'], ['User.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
-    op.create_table(
-        'User',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('username', sa.String(length=50), nullable=True),
-        sa.Column('password', sa.String(length=120), nullable=True),
-        sa.Column('user_type', sa.Integer(), nullable=True),
-        sa.Column('user_status', sa.Integer(), nullable=True),
-        sa.Column('org_id', sa.Integer(), nullable=True),
-        sa.Column('inf_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['inf_id'], ['Influencer.id'], ),
-        sa.ForeignKeyConstraint(['org_id'], ['Organization.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('username')
-    )
-    op.create_index(op.f('ix_User_id'), 'User', ['id'], unique=False)
     op.create_table(
         'Campaign',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -91,8 +87,6 @@ def upgrade() -> None:
         sa.Column('guidance', sa.String(length=2500), nullable=True),
         sa.Column('owner_id', sa.Integer(), nullable=True),
         sa.Column('org_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['org_id'], ['Organization.id'], ),
-        sa.ForeignKeyConstraint(['owner_id'], ['User.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_Campaign_id'), 'Campaign', ['id'], unique=False)
@@ -105,7 +99,6 @@ def upgrade() -> None:
         sa.Column('account_image', sa.String(length=150), nullable=True),
         sa.Column('last_updated', sa.DateTime(), nullable=True),
         sa.Column('inf_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['inf_id'], ['Influencer.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_SocialAccount_id'), 'SocialAccount', ['id'], unique=False)
@@ -114,8 +107,6 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('campaign_id', sa.Integer(), nullable=True),
         sa.Column('influencer_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['campaign_id'], ['Campaign.id'], ),
-        sa.ForeignKeyConstraint(['influencer_id'], ['Influencer.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_Association_Influencers_id'), 'Association_Influencers', ['id'], unique=False)
@@ -124,7 +115,6 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('url', sa.String(length=500), nullable=True),
         sa.Column('campaign_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['campaign_id'], ['Campaign.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_CampaignImage_id'), 'CampaignImage', ['id'], unique=False)
@@ -134,28 +124,33 @@ def upgrade() -> None:
         sa.Column('original_link', sa.String(length=500), nullable=True),
         sa.Column('created_date', sa.DateTime(), nullable=True),
         sa.Column('thumb_path', sa.String(length=500), nullable=True),
-        sa.Column('story_.path', sa.String(length=500), nullable=True),
+        sa.Column('story_path', sa.String(length=500), nullable=True),
         sa.Column('inf_id', sa.Integer(), nullable=True),
         sa.Column('campaign_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['campaign_id'], ['Campaign.id'], ),
-        sa.ForeignKeyConstraint(['inf_id'], ['Influencer.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_CampaignStory_id'), 'CampaignStory', ['id'], unique=False)
 
+    op.create_foreign_key('fk_user_org', 'User', 'Organization', ['org_id'], ['id'])
+    op.create_foreign_key('fk_user_inf', 'User', 'Influencer', ['inf_id'], ['id'])
+    op.create_foreign_key('fk_org_user', 'Organization', 'User', ['user_id'], ['id'])
+    op.create_foreign_key('fk_inf_user', 'Influencer', 'User', ['user_id'], ['id'])
+    op.create_foreign_key('fk_camp_user', 'Campaign', 'User', ['owner_id'], ['id'])
+    op.create_foreign_key('fk_camp_org', 'Campaign', 'Organization', ['org_id'], ['id'])
+    op.create_foreign_key('fk_sa_inf', 'SocialAccount', 'Influencer', ['inf_id'], ['id'])
+    op.create_foreign_key('fk_assoc_camp', 'Association_Influencers', 'Campaign', ['campaign_id'], ['id'])
+    op.create_foreign_key('fk_assoc_inf', 'Association_Influencers', 'Influencer', ['influencer_id'], ['id'])
+    op.create_foreign_key('fk_campimg_camp', 'CampaignImage', 'Campaign', ['campaign_id'], ['id'])
+    op.create_foreign_key('fk_campstory_inf', 'CampaignStory', 'Influencer', ['inf_id'], ['id'])
+    op.create_foreign_key('fk_campstory_camp', 'CampaignStory', 'Campaign', ['campaign_id'], ['id'])
+
 
 def downgrade() -> None:
-    op.drop_index(op.f('ix_CampaignStory_id'), table_name='CampaignStory')
     op.drop_table('CampaignStory')
-    op.drop_index(op.f('ix_CampaignImage_id'), table_name='CampaignImage')
     op.drop_table('CampaignImage')
-    op.drop_index(op.f('ix_Association_Influencers_id'), table_name='Association_Influencers')
     op.drop_table('Association_Influencers')
-    op.drop_index(op.f('ix_SocialAccount_id'), table_name='SocialAccount')
     op.drop_table('SocialAccount')
-    op.drop_index(op.f('ix_Campaign_id'), table_name='Campaign')
     op.drop_table('Campaign')
-    op.drop_index(op.f('ix_User_id'), table_name='User')
-    op.drop_table('User')
     op.drop_table('Influencer')
     op.drop_table('Organization')
+    op.drop_table('User')
